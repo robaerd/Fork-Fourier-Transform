@@ -1,3 +1,11 @@
+//
+//  main.c
+//  fft
+//
+//  Created by Robert Sowula on 12.12.18.
+//  Copyright © 2018 Robert Sowula. All rights reserved.
+//
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,46 +45,29 @@ void order1(_Complex float *EandO, int EandO_length,_Complex float **E,_Complex 
 
 
 void fft(_Complex float *P, int N){
-    if (N <= 1) {
+  if (N <= 1) {
 
-    } else {
+  } else {
 
-      order(P, N);
-      /*
-      pid_t parent = getpid();
-      //pid_t pid = fork();
+    order(P, N);
 
-      if (pid == -1)
-        {
-          // error, failed to fork()
-        }
-      else if (pid > 0)
-        {
-          int status;
-          waitpid(pid, &status, 0);
-        }
-      else
-        {
-          // we are the child
-          //execve(...);
-          //exit(EXIT_FAILURE);   // exec never returns
-          } */
-      fft(P, N/2);
-      fft((P+N/2), N/2);
+    fft(P, N/2);
+    fft((P+N/2), N/2);
 
-      int k;
-      for(k = 0; k < N/2; k++){
-        _Complex float omega = (cos(-((2*PI/N)*k))+ I* sin(-((2*PI/N)*k)));
-        _Complex float e = P[k    ];   // even
-        _Complex float o = P[k+N/2];
-        P[k    ] = e + omega * o;
-        P[k+N/2] = e - omega * o;
-      }
-
+    int k;
+    for(k = 0; k < N/2; k++){
+      _Complex float omega = (cos(-((2*PI/N)*k))+ I* sin(-((2*PI/N)*k)));
+      _Complex float e = P[k    ];   // even
+      _Complex float o = P[k+N/2];
+      P[k    ] = e + omega * o;
+      P[k+N/2] = e - omega * o;
     }
-  }
 
-void readStdIn(_Complex float *X, int *actualValues)
+  }
+}
+
+
+void readFdIn(_Complex float *X, int *actualValues, int fd)
 {
   //char **S_Arr = (char **) malloc(MAX_LINES * sizeof(char **));
   char lineBuf[256];
@@ -85,7 +76,10 @@ void readStdIn(_Complex float *X, int *actualValues)
   char *im_ptr;
   float real = 0.0;
   float im = 0.0;
-  while(fgets(lineBuf, MAX_LINE_LENGTH, stdin) != NULL){
+
+  FILE *fp = fdopen(fd, "r");
+
+  while(fgets(lineBuf, MAX_LINE_LENGTH, fp) != NULL){
     real = strtof(lineBuf, &ptr);
     im = strtof(ptr, &im_ptr);
     X[i] = (_Complex float) real+im*I;
@@ -93,13 +87,18 @@ void readStdIn(_Complex float *X, int *actualValues)
     i++;
   }
   *actualValues = i;
+  fclose(fp);
 
 }
 
-int complexArrToStArr(_Complex float *X, int length)
-{
-  char *complexStrArr[length];
-  //for()
+
+void writeToFD(_Complex float *X,int complexFl_length, int fd){
+  FILE *fp = fdopen(fd, "w");
+  int i;
+  for (i = 0; i< complexFl_length; i++) {
+    fprintf(fp, "%f + i%f\n", creal(X[i]), cimag(X[i]));
+  }
+  fclose(fp);
 }
 
 
@@ -111,14 +110,12 @@ int main()
   _Complex float *X = (_Complex float *)malloc(sizeof(_Complex float) * n);
 
 
-  //int pid = fork();
+  /*readStdIn(X, &actualValues,0); */
+  readFdIn(X, &actualValues, 0);
+  //writeToFD(X, actualValues, 1); //works :) dont leave this here pls
 
-  readStdIn(X, &actualValues);
-  if(actualValues <= 1){
-    //recursion end
-  } else {
 
-  //actualValues even? if not exit with error
+  /* actualValues even? if not exit with error */
 
   _Complex float *P_E = (_Complex float *)malloc(sizeof(_Complex float) * actualValues/2);
   _Complex float *P_O = (_Complex float *)malloc(sizeof(_Complex float) * actualValues/2);
@@ -127,39 +124,61 @@ int main()
 
   //before fork ^^^^^
 
-  int pipefd1[2]; //STD_OUT from child to parent
-  int pipefd2[2]; //from parent to stdin at child
+  int pipefd1[2]; //STD_OUT from first child to parent
+  int pipefd2[2]; //from parent to stdin at first child
+  int pipefd3[2]; //STD_OUT from second child to parent
+  int pipefd4[2]; //from parent to stdin ad second
   int pipe(int pipefd1[2]);
   int pipe(int pipefd2[2]);
-
-
-  //should be don in parent
-  /*dup2(pipefd2[0], STDIN_FILENO);
-  close(pipefd2[0]);
-   close(pipefd2[1]);
-
-  */
-
+  int pipe(int pipefd3[2]);
+  int pipe(int pipefd4[2]);
 
 
   pid_t parent = getpid();
-  pid_t pid_E = fork();
-  pid_t pid_O = fork();
 
   //even part
+  pid_t pid_E = fork();
+
   if (pid_E == -1)
     {
       // error, failed to fork()
     }
   else if (pid_E > 0)
     {
+      /**
+       * write even array to first child
+       */
       dup2(pipefd2[0], STDIN_FILENO);
       close(pipefd2[0]); // closes reading side from parent. only need write end
-      //dont forget to close after writing to pipefd2[1]
-      write()
+      writeToFD(P_E, actualValues/2, pipefd2[1]); //is valid imo
+      close(pipefd2[1]); //error handling
 
-      int status;
-      waitpid(pid_E, &status, 0);
+      //wait and receive result
+      int status1;
+      waitpid(pid_E, &status1, 0);
+
+
+
+      //_Complex float *R_E = (_Complex float *)malloc(sizeof(_Complex float) * actualValues); //maybe only actualValues/2
+
+      readFdIn(P_E, &actualValues, pipefd1[0]); //is actualValues even right? //pipe is reading side from stdout of child to parent //also valid imo --> check notes
+      //needs R_O
+      //            int k;
+      //            for(k = 0; k < actualValues/2; k++){
+      //                _Complex float omega = (cos(-((2*PI/actualValues)*k))+ I* sin(-((2*PI/actualValues)*k)));
+      //                //_Complex float e = P[k    ];   // even
+      //                //_Complex float o = P[k+N/2];
+      //                R_E[k    ] = P_E[k] + omega * P_O[k+actualValues/2];
+      //                R_E[k+actualValues/2] = P_E[k] - omega * P_O[k+actualValues/2];
+      //            }
+      //
+      //            writeToFD(R_E, actualValues, 1); //1 is fd of stdout
+
+
+
+      //recveing end and stopping
+      //            int status1;
+      //            waitpid(pid_E, &status1, 0);
     }
   else
     {
@@ -167,6 +186,16 @@ int main()
       dup2(pipefd1[1], STDOUT_FILENO);
       close(pipefd1[1]);
       close(pipefd1[0]);
+
+      if(actualValues > 1){
+        execlp("forkfft", "forkfft", NULL);
+      } else {
+        writeToFD(P_E, actualValues, 1); // actualValues = 1
+        exit(EXIT_SUCCESS);
+      }
+
+
+      //maybe free R?
 
       //imo also needs to close write end
 
@@ -177,6 +206,7 @@ int main()
     }
 
   //odd part
+  pid_t pid_O = fork();
 
   if (pid_O == -1)
     {
@@ -184,15 +214,45 @@ int main()
     }
   else if (pid_O > 0)
     {
-      int status;
-      waitpid(pid_O, &status, 0);
+
+
+      // write even array to second child
+
+      dup2(pipefd4[0], STDIN_FILENO);
+      close(pipefd4[0]); // closes reading side from parent. only need write end
+      writeToFD(P_O, actualValues/2, pipefd4[1]);
+      close(pipefd4[1]); //error handling
+
+      //wait and receive result
+      int status2;
+      waitpid(pid_O, &status2, 0);
+
+      //_Complex float *R_O = (_Complex float *)malloc(sizeof(_Complex float) * actualValues); //maybe only actualValues/2
+
+      readFdIn(P_O, &actualValues, pipefd3[0]);
     }
   else
     {
+
+
+      //should be done after fork in child process
+      dup2(pipefd3[1], STDOUT_FILENO);
+      close(pipefd3[1]);
+      close(pipefd3[0]);
+
+      if(actualValues > 1){
+        execlp("forkfft", "forkfft", NULL);
+      } else {
+        writeToFD(P_E, actualValues, 1); // actualValues = 1
+        exit(EXIT_SUCCESS);
+      }
       // we are the child
       //execve(...);
       //exit(EXIT_FAILURE);   // exec never returns
     }
+
+
+
 
 
 
@@ -207,7 +267,15 @@ int main()
     //_Complex float o = P[k+N/2];
     R[k    ] = P_E[k] + omega * P_O[k+actualValues/2];
     R[k+actualValues/2] = P_E[k] - omega * P_O[k+actualValues/2];
+
   }
+
+
+  //write to stdout
+  //writeToFD(R, actualValues, 1);
+  writeToFD(R, actualValues, 1);
+
+  //}
 
   //order(X, actualValues);
 
@@ -217,8 +285,8 @@ int main()
 
   //printf("%d", actualValues);
   /*
-  int i;
-  for(i = 0; i < n; i++)
+    int i;
+    for(i = 0; i < n; i++)
     printf("%f + i%f\n", creal(X[i]), cimag(X[i]));
   */
 
@@ -229,8 +297,9 @@ int main()
 
   //int i;
   //for(i = 0; i < actualValues; i++)
-    //printf("%f + i%f\n", creal(X[i]), cimag(X[i]));
+  //printf("%f + i%f\n", creal(X[i]), cimag(X[i]));
 
-    //free(X);
-  }
+  //free(X);
+
+
 }
