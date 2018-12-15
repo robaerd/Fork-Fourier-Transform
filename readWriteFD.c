@@ -9,31 +9,6 @@
 
 #include "forkfft.h"
 
-#define MAX_LINE_LENGTH 2048
-
-int readStdIn(_Complex float **X)
-{
-  char lineBuf[MAX_LINE_LENGTH];
-  int i = 0;
-  char *ptr;
-  float real = 0.0;
-  float im = 0.0;
-
-  while(fgets(lineBuf, MAX_LINE_LENGTH, stdin) != NULL && strcmp(lineBuf, "\n") != 0){
-    if(i >= MAX_LINE_LENGTH)
-      *X = realloc(*X, sizeof(_Complex float) * i*2);
-
-    real = strtof(lineBuf, &ptr);
-    im = strtof(ptr, NULL);
-    (*X)[i++] = (_Complex float) real+im*_Complex_I;
-  }
-  if(i != MAX_LINE_LENGTH)
-    *X = realloc(*X, sizeof(_Complex float) * i);
-
-  return i;
-}
-
-
 void readFdIn(_Complex float *X, int fd)
 {
   char readBuffer[MAX_LINE_LENGTH];

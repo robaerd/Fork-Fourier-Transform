@@ -14,9 +14,9 @@
 #include <unistd.h>
 #include <errno.h>
 
-void readFdIn(_Complex float *, int);
+#define MAX_LINE_LENGTH 2048
 
-int readStdIn(_Complex float **);
+void readFdIn(_Complex float *, int);
 
 void writeToStdOut(_Complex float *X, int);
 
