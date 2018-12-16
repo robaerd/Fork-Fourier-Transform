@@ -21,10 +21,11 @@ void readFdIn(_Complex float *X, int fd)
   float real = 0.0;
   float im = 0.0;
 
+    //int strsize = 0;
   while(read(fd, readBuffer, MAX_LINE_LENGTH) > 0){
     size = size + MAX_LINE_LENGTH;
     strBuf = realloc(strBuf, sizeof(char*) * size);
-    strcat(strBuf, readBuffer);
+    strBuf = strcat(strBuf, readBuffer);
     memset(readBuffer, '\0', sizeof(char) * MAX_LINE_LENGTH);
   }
   strcat(strBuf, readBuffer);
