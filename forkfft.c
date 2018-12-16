@@ -21,8 +21,6 @@
 
 #define PI 3.141592654 /* approximated value of pi */
 
-#define MAX_LINE_LENGTH 2048 /* max length an input line, containing the complex float value, can have */
-
 /**
  * @brief checks if an input line is valid and writes the real and imaginary part into their provided adresses
  * a valid input lines has following form: <value containing only numbers>  and optional <backspace> followed by the <imaginary value> and <"*i"> to explicitly set it as imgaginary part.
