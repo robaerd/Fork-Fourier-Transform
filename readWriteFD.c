@@ -13,13 +13,13 @@
  * @brief reads a filedescriptor and and parsed the input into an array of _Complex float values
  * @param X adress to _Complex float array where the parsed complex float values are written into
  * @param fd filedescripor which will be parsed
- *
  */
 void readFdIn(_Complex float *X, int fd)
 {
-  char readBuffer[MAX_LINE_LENGTH];
+  char readBuffer[MAX_LINE_LENGTH+1]; /* buffer for read() */
   int size = MAX_LINE_LENGTH; // size of strBuf. Will be changed during read() if neccessary
   memset(readBuffer, '\0', sizeof(char) * MAX_LINE_LENGTH);
+  readBuffer[MAX_LINE_LENGTH] = '\0';
   char *strBuf = (char *) malloc(sizeof(char *) * size);
   memset(strBuf, 0, sizeof(char *)*  MAX_LINE_LENGTH);
 
@@ -27,19 +27,20 @@ void readFdIn(_Complex float *X, int fd)
   float real = 0.0;
   float im = 0.0;
 
-  //int strsize = 0;
+  /* read file descriptor and safe result in strBuf */
   while(read(fd, readBuffer, MAX_LINE_LENGTH) > 0){
     size = size + MAX_LINE_LENGTH;
-    strBuf = realloc(strBuf, sizeof(char*) * size);
+    strBuf = realloc(strBuf, sizeof(char) * size);
     strBuf = strcat(strBuf, readBuffer);
     memset(readBuffer, '\0', sizeof(char) * MAX_LINE_LENGTH);
   }
   strcat(strBuf, readBuffer);
 
-  char buffer[MAX_LINE_LENGTH];
+  char buffer[MAX_LINE_LENGTH]; /* buffer containing exactly one line of input (until a newline or null char occures) */
   int i = 0;
   int j = 0;
   int z = 0;
+  /* parses strBuf chars into complex floats and saves them in X */
   while(strBuf[j] != '\0'){
     buffer[z] = strBuf[j];
     if(buffer[z] == '\n' || strBuf[j+1] == '\0'){
