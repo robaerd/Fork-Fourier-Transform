@@ -7,7 +7,7 @@
  * write* functions are parsing _Complex floats type values into chars and are writing them into either a file descriptor or stdout
  */
 
-#include "forkfft.h"
+#include "forkFFT.h"
 
 /**
  * @brief reads a filedescriptor and and parsed the input into an array of _Complex float values

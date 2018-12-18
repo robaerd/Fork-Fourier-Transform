@@ -1,5 +1,5 @@
 /**
- * @file forkfft.h
+ * @file forkFFT.h
  * @author Robert Sowula <e11708475@student.tuwien.ac.at>
  * @date 15.12.18
  * @brief provides all necessary header files for forkfft.c and readwriteFD.c and declares the read and write functions for FD's and stdout

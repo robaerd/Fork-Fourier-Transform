@@ -1,5 +1,5 @@
 /**
- * @file forkfft.c
+ * @file forkFFT.c
  * @author Robert Sowula <e11708475@student.tuwien.ac.at>
  * @date 12.12.18
  *
@@ -14,7 +14,7 @@
  * @details input line amount should be a power of 2
  */
 
-#include "forkfft.h"
+#include "forkFFT.h"
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <ctype.h>
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
           }
           if(close(pipefd4[0]) == -1) closeError("pipefd4[0]");
           if(close(pipefd4[1]) == -1) closeError("pipefd4[1]");
-          execlp("./forkfft", "forkfft", NULL);
+          execlp("./forkFFT", "forkFFT", NULL);
           //if execlp not succesfull:
           fprintf(stderr, "exec error on odd part");
           exit(EXIT_FAILURE);
@@ -153,7 +153,7 @@ int main(int argc, char **argv)
         if(close(pipefd2[0]) == -1) closeError("pipefd2[0]");
         if(close(pipefd2[1]) == -1) closeError("pipefd2[1]");
 
-        execlp("./forkfft", "forkfft", NULL);
+        execlp("./forkFFT", "forkFFT", NULL);
         //if execlp succesfull, next lines will not be reached
         fprintf(stderr, "exec error on even part");
         exit(EXIT_FAILURE);

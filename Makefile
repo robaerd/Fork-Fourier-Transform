@@ -6,19 +6,19 @@ DEFS = -D_BSD_SOURCE -D_SVID_SOURCE -D_POSIX_C_SOURCE=200809L
 CFLAGS = -Wall -g -std=c99 -pedantic $(DEFS)
 LDFLAGS = -lm
 
-OBJECTS = forkfft.o readWriteFD.o
+OBJECTS = forkFFT.o readWriteFD.o
 
 .PHONY: all clean
-all: forkfft
+all: forkFFT
 
-forkfft: $(OBJECTS)
+forkFFT: $(OBJECTS)
 	$(CC) -o $@ $^  $(LDFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-forkfft.o: forkfft.c forkfft.h
-readWriteFD.o: readWriteFD.c forkfft.h
+forkFFT.o: forkFFT.c forkFFT.h
+readWriteFD.o: readWriteFD.c forkFFT.h
 
 clean:
-	rm -rf *.o forkfft
+	rm -rf *.o forkFFT
